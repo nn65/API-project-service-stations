@@ -94,6 +94,9 @@ struct NodeBst *bstMax(struct NodeBst *x){
     return x;
 }
 
+/*
+ * Binary search tree utility function to delete a node
+ */
 void bstTransplant(struct NodeBst *root, struct NodeBst *u, struct NodeBst *v){
     if(u->p==NULL)
         root = v;
@@ -194,6 +197,32 @@ void bstDelete(struct NodeBst *root, struct NodeBst *z){
 //
 //}
 
+struct NodeBst *addStation(struct NodeBst *root, int distance){
+    // If the station is in the tree, do nothing.
+    if(bstSearch(root, distance) != NULL)
+        return NULL;
+    // If the station is not in the tree, add to it.
+    struct NodeBst *newStation = (struct NodeBst*)malloc(sizeof(struct NodeBst));
+    newStation->distance = distance;
+    newStation->cars = (struct Cars*)malloc(sizeof(struct Cars));
+    newStation->cars->autonomy = (int*)malloc(CAPACITY*sizeof(int));
+    newStation->cars->size = 0;
+    newStation->cars->maxAutonomy = 0;
+    newStation->cars->maxCapacity = CAPACITY;
+    bstInsert(root, newStation);
+    return newStation;
+}
+
+bool removeStation(struct NodeBst *root, int distance){
+    struct NodeBst *nodeToDelete = bstSearch(root, distance);
+    // If the station is not in the tree, do nothing.
+    if(nodeToDelete == NULL)
+        return false;
+    // If the station is in the tree, remove it.
+    bstDelete(root, nodeToDelete);
+    return true;
+}
+
 /*
  * Add a car in the service station.
  */
@@ -248,14 +277,33 @@ void removeCar(struct NodeBst *station, int autonomy){
     cars->size--;
 }
 
+/*
+ * String to integer.
+ */
+int stringToInt(char ch){
+    int integer = 0;
+    while(1){
+        integer += (ch - '0');  //Converto char in un int, togliendo lo zero di offset.
+        ch = getc_unlocked(stdin);
+        if(ch == '\n' || ch == ' '){
+            ch = getc_unlocked(stdin);
+            break;
+        }
+        integer *= 10;
+        ch = getc_unlocked(stdin);
+    }
+    return integer;
+}
+
 int main() {
     int status = 0;
+    struct NodeBst *rootStations = (struct NodeBst*)malloc(sizeof(struct NodeBst));
     // -------------------------------------------------
     // Input read.
     // -------------------------------------------------
     // Set the status.
     char in = getc_unlocked(stdin);
-    switch (in) {
+    switch(in){
         case 'a':
             for(int i=0; i<=10; i++)
                 in = getc_unlocked(stdin);
@@ -268,23 +316,78 @@ int main() {
                     in = getc_unlocked(stdin);
                 status = ADD_CAR;
             }
+            break;
 
         case 'd':
-            for(int i=0; i<=18; i++)
+            for(int i=0; i<=19; i++)
                 in = getc_unlocked(stdin);
             status = REMOVE_STATION;
             break;
 
         case 'r':
+            for(int i=0; i<=13; i++)
+                in = getc_unlocked(stdin);
             status = REMOVE_CAR;
             break;
 
         case 'p':
+            for(int i=0; i<=19; i++)
+                in = getc_unlocked(stdin);
             status = PLAN_ROUTE;
             break;
 
         default:
             status = 0;
+    }
+
+    switch(status){
+        case ADD_STATION:{
+            int distance = stringToInt(in);
+            int carNumber = stringToInt(in);
+            struct NodeBst *newStation = addStation(rootStations, distance);
+            if(newStation == NULL){  // If null is already in the tree. Do nothing.
+                printf("non aggiunta");
+                break;
+            }
+            for(int i=1; i<=carNumber; i++){
+                addCar(newStation, stringToInt(in));
+            }
+            printf("aggiunta");
+            break;
+        }
+
+        case ADD_CAR:{
+            int distance = stringToInt(in);
+            int autonomy = stringToInt(in);
+            struct NodeBst *station = bstSearch(rootStations, distance);
+            if(station == NULL){  // If null it doesn't exist in the tree.
+                printf("non aggiunta");
+                break;
+            }
+            addCar(station, autonomy);
+            printf("aggiunta");
+            break;
+        }
+
+        case REMOVE_STATION:{
+            int distance = stringToInt(in);
+            bool removed = removeStation(rootStations, distance);
+            if(removed)
+                printf("demolita");
+            else
+                printf("non demolita");
+        }
+
+        case REMOVE_CAR:{
+            
+        }
+
+        case PLAN_ROUTE:{
+            printf("rotta pianificata o panificata")
+        }
+
+        default:
+            printf("diocane");
     }
 
     return 0;
