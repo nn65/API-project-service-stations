@@ -1,24 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#define CAPACITY 20  //Dimensione alfabeto.
 
 /*
  * Node of the binary search tree.
  */
 struct NodeBst{
     unsigned int distance;  // Distance from the start
+    struct Heap *carsAutonomy;  // List of cars' autonomy
     struct NodeBst *l;  // Left node
     struct NodeBst *r;  // Right node
     struct NodeBst *p;  // Parent node
 };
 
 /*
- * Node of the heap.
+ * Heap data structure.
  */
-struct NodeHeap{
-    unsigned int autonomy;  // Car autonomy.
-    struct NodeHeap *l;  // Left node
-    struct NodeHeap *r;  // Right node
+struct Heap{
+    unsigned int *autonomy;  // List of cars' autonomy
+    unsigned int size;  // Actual size of the list
+    unsigned int maxCapacity; // Maximum designed capacity of the list
 };
 
 /*
@@ -119,13 +121,57 @@ void bstDelete(struct NodeBst *root, struct NodeBst *z){
 }
 
 /*
- *
+ * Heap max heapify function.
  */
-void maxHeapify(struct NodeHeap *root, struct NodeHeap *z){
-    struct NodeHeap *l, *r;
-    l = z->l;
-    r = z->r;
+void maxHeapify(struct Heap *h, int i){
+    unsigned int *a = h->autonomy;
+    int l = 2*i;
+    int r = 2*i+1;
+    int max;
 
+    if(l <= h->size && a[l] > a[i])
+        max = l;
+    else
+        max = i;
+    if(r <= h->size && a[r] > a[max])
+        max = r;
+    if(max != i){
+        unsigned int temp = h->autonomy[max];
+        h->autonomy[max] = h->autonomy[i];
+        h->autonomy[i] = temp;
+        maxHeapify(h, max);
+    }
+}
+
+struct Heap *buildMaxHeap(){
+    struct Heap* h = (struct Heap*)malloc(sizeof(struct Heap));
+    // Set size to 0. No element inside the heap.
+    // Set the initial capacity to 10 (default value).
+    h->size = 0;
+    h->maxCapacity = CAPACITY;
+    h->autonomy = (unsigned int*)malloc(h->maxCapacity * sizeof(int));
+    return h;
+}
+
+void maxHeapInsert(struct Heap *h, int key){
+    // Check if the size is greater than the max capacity. If true allocate more memory.
+    if(h->size >= h->maxCapacity-1){
+        unsigned int *newAutonomy = realloc(h->autonomy, (h->maxCapacity+CAPACITY)*sizeof(int));
+        h->autonomy = newAutonomy;
+        h->maxCapacity += CAPACITY;
+    }
+
+    if(h->size != 0)
+        h->size++;
+    h->autonomy[h->size] = key;
+
+    int i = h->size;
+    while(i>0 && h->autonomy[i/2] < h->autonomy[i]){
+        unsigned int temp = h->autonomy[i/2];
+        h->autonomy[i/2] = h->autonomy[i];
+        h->autonomy[i] = temp;
+        i = i/2;  // i/2 is the parent.
+    }
 }
 
 int main() {
