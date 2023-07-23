@@ -11,31 +11,31 @@
 /*
  * Node of the binary search tree.
  */
-struct NodeBst{
+typedef struct NodeBst{
     unsigned int distance;  // Distance from the start.
     struct Cars *cars;  // List of cars in the station.
     struct NodeBst *l;  // Left node.
     struct NodeBst *r;  // Right node.
     struct NodeBst *p;  // Parent node.
-};
+}NodeBst;
 
 /*
  * Heap data structure.
  */
-struct Cars{
+typedef struct Cars{
     int *autonomy;  // List of cars' autonomy.
     int size;  // Actual size of the list.
     int maxCapacity; // Maximum designed capacity of the list.
     int maxAutonomy;
-};
+}Cars;
 
 /*
  * Binary search tree in order tree walk.
  */
-void bstInorderWalk(struct NodeBst *x){
+void bstInorderWalk(NodeBst *x){
     if(x!=NULL){
         bstInorderWalk(x->l);
-        //printf(x->distance);
+        printf("%d ", x->distance);
         bstInorderWalk(x->r);
     }
 }
@@ -43,7 +43,7 @@ void bstInorderWalk(struct NodeBst *x){
 /*
  * Binary search tree search.
  */
-struct NodeBst *bstSearch(struct NodeBst *x, int key){
+NodeBst *bstSearch(NodeBst *x, int key){
     while (x!=NULL && key!=x->distance){
         if(key < x->distance)
             x = x->l;
@@ -56,30 +56,31 @@ struct NodeBst *bstSearch(struct NodeBst *x, int key){
 /*
  * Binary search tree insert.
  */
-void bstInsert(struct NodeBst *root, struct NodeBst *z){
-    struct NodeBst *y, *x;
+void bstInsert(NodeBst **root, NodeBst *z){
+    NodeBst *y, *x;
     y=NULL;
-    x=root;
+    x=(*root);
     while(x!=NULL){
         y=x;
         if(z->distance < x->distance)
             x = x->l;
         else
             x = x->r;
-        z->p = y;
-        if(y==NULL)
-            root = z;  // The tree is empty.
-        else if(z->distance < y->distance)
-            y->l = z;
-        else
-            y->r = z;
     }
+    z->p = y;
+    if(y==NULL)
+        (*root) = z;  // The tree is empty.
+    else if(z->distance < y->distance)
+        y->l = z;
+    else
+        y->r = z;
+
 }
 
 /*
  * Binary search tree minimum key search.
  */
-struct NodeBst *bstMin(struct NodeBst *x){
+NodeBst *bstMin(NodeBst *x){
     while(x->l!=NULL)
         x=x->l;
     return x;
@@ -88,7 +89,7 @@ struct NodeBst *bstMin(struct NodeBst *x){
 /*
  * Binary search tree maximum key search.
  */
-struct NodeBst *bstMax(struct NodeBst *x){
+NodeBst *bstMax(NodeBst *x){
     while(x->r!=NULL)
         x=x->r;
     return x;
@@ -97,7 +98,7 @@ struct NodeBst *bstMax(struct NodeBst *x){
 /*
  * Binary search tree utility function to delete a node
  */
-void bstTransplant(struct NodeBst *root, struct NodeBst *u, struct NodeBst *v){
+void bstTransplant(NodeBst *root, NodeBst *u, NodeBst *v){
     if(u->p==NULL)
         root = v;
     else if(u==u->p->l)
@@ -111,22 +112,23 @@ void bstTransplant(struct NodeBst *root, struct NodeBst *u, struct NodeBst *v){
 /*
  * Binary search tree node deletion. FORSE E' SBAGLIATO. CONTROLLARE.
  */
-void bstDelete(struct NodeBst *root, struct NodeBst *z){
-    struct NodeBst *y;
+void bstDelete(NodeBst *root, NodeBst *z){
+    NodeBst *y;
     if(z->l==NULL)
         bstTransplant(root, z, z->r);
     else if(z->r==NULL)
         bstTransplant(root, z, z->l);
-    else
-        y= bstMin(z->r);
-    if(y->p!=z){
-        bstTransplant(root, y, y->r);
-        y->r = z->r;
-        y->r->p = y;
+    else {
+        y = bstMin(z->r);
+        if(y->p!=z){
+            bstTransplant(root, y, y->r);
+            y->r = z->r;
+            y->r->p = y;
+        }
+        bstTransplant(root, z, y);
+        y->l = z->l;
+        y->l->p = y;
     }
-    bstTransplant(root, z, y);
-    y->l = z->l;
-    y->l->p = y;
 }
 
 ///*
@@ -197,14 +199,14 @@ void bstDelete(struct NodeBst *root, struct NodeBst *z){
 //
 //}
 
-struct NodeBst *addStation(struct NodeBst *root, int distance){
+NodeBst *addStation(NodeBst **root, int distance){
     // If the station is in the tree, do nothing.
-    if(bstSearch(root, distance) != NULL)
+    if(bstSearch(*root, distance) != NULL)
         return NULL;
     // If the station is not in the tree, add to it.
-    struct NodeBst *newStation = (struct NodeBst*)malloc(sizeof(struct NodeBst));
+    NodeBst *newStation = (NodeBst*)malloc(sizeof(NodeBst));
     newStation->distance = distance;
-    newStation->cars = (struct Cars*)malloc(sizeof(struct Cars));
+    newStation->cars = (Cars*)malloc(sizeof(Cars));
     newStation->cars->autonomy = (int*)malloc(CAPACITY*sizeof(int));
     newStation->cars->size = 0;
     newStation->cars->maxAutonomy = 0;
@@ -213,8 +215,8 @@ struct NodeBst *addStation(struct NodeBst *root, int distance){
     return newStation;
 }
 
-bool removeStation(struct NodeBst *root, int distance){
-    struct NodeBst *nodeToDelete = bstSearch(root, distance);
+bool removeStation(NodeBst *root, int distance){
+    NodeBst *nodeToDelete = bstSearch(root, distance);
     // If the station is not in the tree, do nothing.
     if(nodeToDelete == NULL)
         return false;
@@ -225,9 +227,10 @@ bool removeStation(struct NodeBst *root, int distance){
 
 /*
  * Add a car in the service station.
+ * HP: the station exists in the tree.
  */
-void addCar(struct NodeBst *station, int autonomy){
-    struct Cars *cars = station->cars;
+void addCar(NodeBst *station, int autonomy){
+    Cars *cars = station->cars;
     // Check if the size is greater than the max capacity. If true allocate more memory.
     if(cars->size >= cars->maxCapacity){
         cars->maxCapacity += CAPACITY;
@@ -246,9 +249,10 @@ void addCar(struct NodeBst *station, int autonomy){
 
 /*
  * Remove a car from the service station.
+ * HP: the station exists in the tree.
  */
-void removeCar(struct NodeBst *station, int autonomy){
-    struct Cars *cars = station->cars;
+void removeCar(NodeBst *station, int autonomy){
+    Cars *cars = station->cars;
     bool found = false;
     bool replaceMax = autonomy == cars->maxAutonomy;
     int next = 0;
@@ -280,115 +284,134 @@ void removeCar(struct NodeBst *station, int autonomy){
 /*
  * String to integer.
  */
-int stringToInt(char ch){
+int stringToInt(char *ch){
     int integer = 0;
     while(1){
-        integer += (ch - '0');  //Converto char in un int, togliendo lo zero di offset.
-        ch = getc_unlocked(stdin);
-        if(ch == '\n' || ch == ' '){
-            ch = getc_unlocked(stdin);
+        integer += (*ch - '0');  //Converto char in un int, togliendo lo zero di offset.
+        *ch = getc_unlocked(stdin);
+        if(*ch == '\n' || *ch == ' '){  // If \n is found, forward!
+            *ch = getc_unlocked(stdin);
             break;
         }
         integer *= 10;
-        ch = getc_unlocked(stdin);
     }
     return integer;
 }
 
 int main() {
     int status = 0;
-    struct NodeBst *rootStations = (struct NodeBst*)malloc(sizeof(struct NodeBst));
+    char *in = (char*)malloc(sizeof(char));
+    NodeBst *rootStations = NULL;
+
     // -------------------------------------------------
     // Input read.
     // -------------------------------------------------
-    // Set the status.
-    char in = getc_unlocked(stdin);
-    switch(in){
-        case 'a':
-            for(int i=0; i<=10; i++)
-                in = getc_unlocked(stdin);
-            if(in == 's'){
-                for(int i=0; i<=9; i++)
-                    in = getc_unlocked(stdin);
-                status = ADD_STATION;
-            } else {
-                for(int i=0; i<=5; i++)
-                    in = getc_unlocked(stdin);
-                status = ADD_CAR;
-            }
-            break;
+    *in = getc_unlocked(stdin);
+    // Loop until EOF reached.
+    while(*in != -1){
+        // Set the status based on the written command.
+        switch(*in){
+            case 'a':
+                for(int i=1; i<=9; i++)
+                    *in = getc_unlocked(stdin);
+                if(*in == 's'){
+                    for(int i=1; i<=9; i++)
+                        *in = getc_unlocked(stdin);
+                    status = ADD_STATION;
+                } else {
+                    for(int i=1; i<=5; i++)
+                        *in = getc_unlocked(stdin);
+                    status = ADD_CAR;
+                }
+                break;
 
-        case 'd':
-            for(int i=0; i<=19; i++)
-                in = getc_unlocked(stdin);
-            status = REMOVE_STATION;
-            break;
+            case 'd':
+                for(int i=1; i<=19; i++)
+                    *in = getc_unlocked(stdin);
+                status = REMOVE_STATION;
+                break;
 
-        case 'r':
-            for(int i=0; i<=13; i++)
-                in = getc_unlocked(stdin);
-            status = REMOVE_CAR;
-            break;
+            case 'r':
+                for(int i=1; i<=13; i++)
+                    *in = getc_unlocked(stdin);
+                status = REMOVE_CAR;
+                break;
 
-        case 'p':
-            for(int i=0; i<=19; i++)
-                in = getc_unlocked(stdin);
-            status = PLAN_ROUTE;
-            break;
+            case 'p':
+                for(int i=1; i<=19; i++)
+                    *in = getc_unlocked(stdin);
+                status = PLAN_ROUTE;
+                break;
 
-        default:
-            status = 0;
-    }
+            default:
+                status = 0;
+        }
 
-    switch(status){
-        case ADD_STATION:{
-            int distance = stringToInt(in);
-            int carNumber = stringToInt(in);
-            struct NodeBst *newStation = addStation(rootStations, distance);
-            if(newStation == NULL){  // If null is already in the tree. Do nothing.
-                printf("non aggiunta");
+        // Based on the command, do the right actions
+        switch(status){
+            case ADD_STATION:{
+                int distance = stringToInt(in);
+                int carNumber = stringToInt(in);
+                NodeBst *newStation = addStation(&rootStations, distance);
+                if(newStation == NULL){  // If null is already in the tree. Do nothing.
+                    while(*in != '\n')  // Forward the input until next line character.
+                        *in = getc_unlocked(stdin);
+                    *in = getc_unlocked(stdin);  // Another forward to go to first char of the next line.
+                    printf("non aggiunta\n");
+                    break;
+                }
+                for(int i=1; i<=carNumber; i++){
+                    addCar(newStation, stringToInt(in));
+                }
+                printf("aggiunta\n");
                 break;
             }
-            for(int i=1; i<=carNumber; i++){
-                addCar(newStation, stringToInt(in));
-            }
-            printf("aggiunta");
-            break;
-        }
 
-        case ADD_CAR:{
-            int distance = stringToInt(in);
-            int autonomy = stringToInt(in);
-            struct NodeBst *station = bstSearch(rootStations, distance);
-            if(station == NULL){  // If null it doesn't exist in the tree.
-                printf("non aggiunta");
+            case ADD_CAR:{
+                int distance = stringToInt(in);
+                int autonomy = stringToInt(in);
+                NodeBst *station = bstSearch(rootStations, distance);
+                if(station == NULL){  // If null it doesn't exist in the tree.
+                    printf("non aggiunta\n");
+                    break;
+                }
+                addCar(station, autonomy);
+                printf("aggiunta\n");
                 break;
             }
-            addCar(station, autonomy);
-            printf("aggiunta");
-            break;
-        }
 
-        case REMOVE_STATION:{
-            int distance = stringToInt(in);
-            bool removed = removeStation(rootStations, distance);
-            if(removed)
-                printf("demolita");
-            else
-                printf("non demolita");
-        }
+            case REMOVE_STATION:{
+                int distance = stringToInt(in);
+                bool removed = removeStation(rootStations, distance);
+                if(removed)
+                    printf("demolita\n");
+                else
+                    printf("non demolita\n");
+                break;
+            }
 
-        case REMOVE_CAR:{
-            
-        }
+            case REMOVE_CAR:{
+                int distance = stringToInt(in);
+                int autonomy = stringToInt(in);
+                NodeBst *station = bstSearch(rootStations, distance);
+                if(station == NULL){  // If null it doesn't exist in the tree.
+                    printf("non rottamata\n");
+                    break;
+                }
+                removeCar(station, autonomy);
+                printf("rottamata\n");
+                break;
+            }
 
-        case PLAN_ROUTE:{
-            printf("rotta pianificata o panificata")
-        }
+            case PLAN_ROUTE:{
+                printf("rotta pianificata o panificata\n");
+            }
 
-        default:
-            printf("diocane");
+            default:
+                return 0;
+        }
     }
 
+    bstInorderWalk(rootStations);
     return 0;
 }
