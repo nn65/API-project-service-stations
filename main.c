@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#define CAPACITY 50  // Default array size to allocate.
+#define CAPACITY 50  // Default array maximum capacity to allocate.
 #define ADD_STATION 1
 #define REMOVE_STATION 2
 #define ADD_CAR 3
@@ -29,13 +29,22 @@ typedef struct Cars{
     int maxAutonomy;
 }Cars;
 
+void printCars(NodeBst *station){
+    for(int i=0; i<station->cars->size; i++){
+        printf("%d ", station->cars->autonomy[i]);
+    }
+}
+
 /*
  * Binary search tree in order tree walk.
  */
 void bstInorderWalk(NodeBst *x){
     if(x!=NULL){
         bstInorderWalk(x->l);
-        printf("%d ", x->distance);
+        printf("Distanza: %d - ", x->distance);
+        printf("Autonomie: ");
+        printCars(x);
+        printf("\n");
         bstInorderWalk(x->r);
     }
 }
@@ -227,7 +236,7 @@ bool removeStation(NodeBst *root, int distance){
 
 /*
  * Add a car in the service station.
- * HP: the station exists in the tree.
+ * HP: the station exists in the tree and the autonomy is not 0.
  */
 void addCar(NodeBst *station, int autonomy){
     Cars *cars = station->cars;
@@ -289,7 +298,7 @@ int stringToInt(char *ch){
     while(1){
         integer += (*ch - '0');  //Converto char in un int, togliendo lo zero di offset.
         *ch = getc_unlocked(stdin);
-        if(*ch == '\n' || *ch == ' '){  // If \n is found, forward!
+        if(*ch == '\n' || *ch == ' ' || *ch == -1){  // If \n is found, forward!
             *ch = getc_unlocked(stdin);
             break;
         }
@@ -370,7 +379,7 @@ int main() {
                 int distance = stringToInt(in);
                 int autonomy = stringToInt(in);
                 NodeBst *station = bstSearch(rootStations, distance);
-                if(station == NULL){  // If null it doesn't exist in the tree.
+                if(station == NULL || autonomy <= 0){  // If null it doesn't exist in the tree.
                     printf("non aggiunta\n");
                     break;
                 }
