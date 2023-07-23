@@ -260,10 +260,10 @@ void addCar(NodeBst *station, int autonomy){
  * Remove a car from the service station.
  * HP: the station exists in the tree.
  */
-void removeCar(NodeBst *station, int autonomy){
+bool removeCar(NodeBst *station, int autonomy){
     Cars *cars = station->cars;
     bool found = false;
-    bool replaceMax = autonomy == cars->maxAutonomy;
+    bool replaceMax = (autonomy == cars->maxAutonomy);
     int next = 0;
 
     for(int i=0; i<cars->size; i++){
@@ -287,7 +287,14 @@ void removeCar(NodeBst *station, int autonomy){
         }
     }
 
-    cars->size--;
+    // Only if the value is found, decrease the size.
+    if(found)
+        cars->size--;
+
+    if(found)
+        return true;
+    else
+        return false;
 }
 
 /*
@@ -406,8 +413,12 @@ int main() {
                     printf("non rottamata\n");
                     break;
                 }
-                removeCar(station, autonomy);
-                printf("rottamata\n");
+
+                bool removed = removeCar(station, autonomy);
+                if(removed)
+                    printf("rottamata\n");
+                else
+                    printf("non rottamata\n");
                 break;
             }
 
