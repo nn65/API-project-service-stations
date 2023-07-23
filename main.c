@@ -354,16 +354,15 @@ int main() {
                 int carNumber = stringToInt(in);
                 NodeBst *newStation = addStation(&rootStations, distance);
                 if(newStation == NULL){  // If null is already in the tree. Do nothing.
-                    while(*in != '\n')  // Forward the input until next line character.
+                    while((*in < 97 || *in > 122) && *in != -1)  // Forward the input until next command. (97=a, 122=z)
                         *in = getc_unlocked(stdin);
-                    *in = getc_unlocked(stdin);  // Another forward to go to first char of the next line.
-                    printf("non aggiunta\n");
+                    printf("non aggiunta %d\n", distance);
                     break;
                 }
                 for(int i=1; i<=carNumber; i++){
                     addCar(newStation, stringToInt(in));
                 }
-                printf("aggiunta\n");
+                printf("aggiunta %d\n", distance);
                 break;
             }
 
