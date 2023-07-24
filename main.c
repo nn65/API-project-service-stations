@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#define CAPACITY 50  // Default array maximum capacity to allocate.
+#define CARS_CAPACITY 50  // Default array maximum capacity to allocate.
 #define ADD_STATION 1
 #define REMOVE_STATION 2
 #define ADD_CAR 3
@@ -34,6 +34,10 @@ void printCars(NodeBst *station){
         printf("%d ", station->cars->autonomy[i]);
     }
 }
+
+// ---------------------------------------------------------------
+// Binary tree.
+// ---------------------------------------------------------------
 
 /*
  * Binary search tree in order tree walk.
@@ -119,7 +123,7 @@ void bstTransplant(NodeBst *root, NodeBst *u, NodeBst *v){
 }
 
 /*
- * Binary search tree node deletion. FORSE E' SBAGLIATO. CONTROLLARE.
+ * Binary search tree node deletion.
  */
 void bstDelete(NodeBst *root, NodeBst *z){
     NodeBst *y;
@@ -138,6 +142,21 @@ void bstDelete(NodeBst *root, NodeBst *z){
         y->l = z->l;
         y->l->p = y;
     }
+}
+
+/*
+ * Binary search tree node successor.
+ */
+NodeBst *bstSuccessor(NodeBst *x){
+    NodeBst *y;
+    if(x->r != NULL)
+        return bstMin(x->r);
+    y = x->p;
+    while(y!=NULL && x==y->r){
+        x = y;
+        y=y->p;
+    }
+    return y;
 }
 
 ///*
@@ -171,7 +190,7 @@ void bstDelete(NodeBst *root, NodeBst *z){
 //    // Set size to 0. No element inside the heap.
 //    // Set the initial capacity to the default value.
 //    h->size = 0;
-//    h->maxCapacity = CAPACITY;
+//    h->maxCapacity = CARS_CAPACITY;
 //    h->autonomy = (unsigned int*)malloc(h->maxCapacity * sizeof(int));
 //    return h;
 //}
@@ -182,9 +201,9 @@ void bstDelete(NodeBst *root, NodeBst *z){
 //void maxHeapInsert(struct Heap *h, int key){
 //    // Check if the size is greater than the max capacity. If true allocate more memory.
 //    if(h->size >= h->maxCapacity-1){
-//        unsigned int *newAutonomy = realloc(h->autonomy, (h->maxCapacity+CAPACITY)*sizeof(int));
+//        unsigned int *newAutonomy = realloc(h->autonomy, (h->maxCapacity+CARS_CAPACITY)*sizeof(int));
 //        h->autonomy = newAutonomy;
-//        h->maxCapacity += CAPACITY;
+//        h->maxCapacity += CARS_CAPACITY;
 //    }
 //
 //    // If not the first item increase the size (= last element).
@@ -208,6 +227,14 @@ void bstDelete(NodeBst *root, NodeBst *z){
 //
 //}
 
+// ---------------------------------------------------------------
+// Commands.
+// ---------------------------------------------------------------
+
+/*
+ * Add a station to the tree.
+ * Return the added station or null if it's already in the tree.
+ */
 NodeBst *addStation(NodeBst **root, int distance){
     // If the station is in the tree, do nothing.
     if(bstSearch(*root, distance) != NULL)
@@ -216,14 +243,18 @@ NodeBst *addStation(NodeBst **root, int distance){
     NodeBst *newStation = (NodeBst*)malloc(sizeof(NodeBst));
     newStation->distance = distance;
     newStation->cars = (Cars*)malloc(sizeof(Cars));
-    newStation->cars->autonomy = (int*)malloc(CAPACITY*sizeof(int));
+    newStation->cars->autonomy = (int*)malloc(CARS_CAPACITY * sizeof(int));
     newStation->cars->size = 0;
     newStation->cars->maxAutonomy = 0;
-    newStation->cars->maxCapacity = CAPACITY;
+    newStation->cars->maxCapacity = CARS_CAPACITY;
     bstInsert(root, newStation);
     return newStation;
 }
 
+/*
+ * Remove the selected station.
+ * Return false if the station doesn't exist.
+ */
 bool removeStation(NodeBst *root, int distance){
     NodeBst *nodeToDelete = bstSearch(root, distance);
     // If the station is not in the tree, do nothing.
@@ -242,7 +273,7 @@ void addCar(NodeBst *station, int autonomy){
     Cars *cars = station->cars;
     // Check if the size is greater than the max capacity. If true allocate more memory.
     if(cars->size >= cars->maxCapacity){
-        cars->maxCapacity += CAPACITY;
+        cars->maxCapacity += CARS_CAPACITY;
         cars->autonomy = realloc(cars->autonomy, cars->maxCapacity * sizeof(int));
     }
 
@@ -259,6 +290,7 @@ void addCar(NodeBst *station, int autonomy){
 /*
  * Remove a car from the service station.
  * HP: the station exists in the tree.
+ * Return false if the car doesn't exist in the station.
  */
 bool removeCar(NodeBst *station, int autonomy){
     Cars *cars = station->cars;
@@ -297,6 +329,14 @@ bool removeCar(NodeBst *station, int autonomy){
         return false;
 }
 
+void planRoute(NodeBst *root, int start, int end){
+    
+}
+
+// ---------------------------------------------------------------
+// Utilities.
+// ---------------------------------------------------------------
+
 /*
  * String to integer.
  */
@@ -313,6 +353,10 @@ int stringToInt(char *ch){
     }
     return integer;
 }
+
+// ---------------------------------------------------------------
+// Main.
+// ---------------------------------------------------------------
 
 int main() {
     int status = 0;
@@ -408,13 +452,14 @@ int main() {
             case REMOVE_CAR:{
                 int distance = stringToInt(in);
                 int autonomy = stringToInt(in);
+                bool removed = false;
                 NodeBst *station = bstSearch(rootStations, distance);
                 if(station == NULL){  // If null it doesn't exist in the tree.
-                    printf("non rottamata\n");
-                    break;
+                    removed = false;
+                } else {
+                    removed = removeCar(station, autonomy);
                 }
 
-                bool removed = removeCar(station, autonomy);
                 if(removed)
                     printf("rottamata\n");
                 else
@@ -423,7 +468,10 @@ int main() {
             }
 
             case PLAN_ROUTE:{
-                printf("rotta pianificata o panificata\n");
+                int distanceStart = stringToInt(in);  // The stations are certainly in the tree (da specifica).
+                int distanceEnd = stringToInt(in);
+
+                planRoute(rootStations, distanceStart, distanceEnd);
             }
 
             default:
