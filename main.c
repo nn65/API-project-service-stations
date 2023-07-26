@@ -7,12 +7,13 @@
 #define ADD_CAR 3
 #define REMOVE_CAR 4
 #define PLAN_ROUTE 5
+#define INF 64000;
 
 /*
  * Node of the binary search tree.
  */
 typedef struct NodeBst{
-    unsigned int distance;  // Distance from the start.
+    int distance;  // Distance from the start.
     struct Cars *cars;  // List of cars in the station.
     struct NodeBst *l;  // Left node.
     struct NodeBst *r;  // Right node.
@@ -20,14 +21,36 @@ typedef struct NodeBst{
 }NodeBst;
 
 /*
- * Heap data structure.
+ * Cars data structure.
  */
 typedef struct Cars{
     int *autonomy;  // List of cars' autonomy.
     int size;  // Actual size of the list.
     int maxCapacity; // Maximum designed capacity of the list.
-    int maxAutonomy;
+    int maxAutonomy;  // Maximum autonomy in the list of cars.
 }Cars;
+
+typedef struct Edge{
+    struct NodeGraph *node;
+    struct Edge *next;
+}Edge;
+
+typedef struct NodeGraph{
+    int num;
+    int d;
+    struct Edge *edges;
+    struct NodeGraph *next;
+}NodeGraph;
+
+typedef struct List{
+    int data;
+    struct List *next;
+}List;
+
+typedef struct Graph{
+    struct List *pi;
+    struct NodeGraph *nodes;
+}Graph;
 
 void printCars(NodeBst *station){
     for(int i=0; i<station->cars->size; i++){
@@ -159,6 +182,14 @@ NodeBst *bstSuccessor(NodeBst *x){
     return y;
 }
 
+// ---------------------------------------------------------------
+// Graph.
+// ---------------------------------------------------------------
+
+void graphAddNode(){
+
+}
+
 ///*
 // * Heap max heapify function.
 // */
@@ -226,6 +257,7 @@ NodeBst *bstSuccessor(NodeBst *x){
 //void maxHeapDelete(struct Heap *h, int key){
 //
 //}
+
 
 // ---------------------------------------------------------------
 // Commands.
@@ -330,7 +362,27 @@ bool removeCar(NodeBst *station, int autonomy){
 }
 
 void planRoute(NodeBst *root, int start, int end){
-    
+    int distanceRef, maxAutonomy;
+    Graph *g = (Graph*)malloc(sizeof(Graph));
+
+    NodeBst *bstActualNode = bstSearch(root, start);  // Esiste sicuramente.
+    distanceRef = bstActualNode->distance;
+    maxAutonomy = bstActualNode->cars->maxAutonomy;
+    NodeGraph *newNode = (NodeGraph*)malloc(sizeof(NodeGraph));
+    newNode->num = bstActualNode->distance;
+    newNode->d = 0;  // Metto a 0 perchè è il source
+    g->nodes = newNode;  // Aggiungo al grafo il primo nodo HEAD.
+
+    NodeGraph *nodeSeek = g->nodes;
+    Edge *
+    NodeBst *bstSucc = bstSuccessor(bstActualNode);
+    while(distanceRef+maxAutonomy >= bstSucc->distance){
+        newNode = (NodeGraph*)malloc(sizeof(NodeGraph));
+        newNode->num = bstSucc->distance;
+        newNode->d = INF;
+
+        bstSucc = bstSuccessor(bstSucc);
+    }
 }
 
 // ---------------------------------------------------------------
