@@ -370,8 +370,6 @@ bool removeCar(NodeBst *station, int autonomy){
 
 void planRoute(NodeBst *root, int start, int end){
     int maxDist = 0;
-    List *headPi = NULL;
-    List *tPi = NULL;
     List *headSortedNodes = NULL;
     List *tHead = NULL;
     List *tSeek = NULL;
@@ -383,14 +381,11 @@ void planRoute(NodeBst *root, int start, int end){
     headSortedNodes = newNode;
     tHead = headSortedNodes;
     tSeek = tHead;
-    headPi = (List*)malloc(sizeof (List));
-    headPi->num = bstNode->distance;
-    tPi = headPi;
 
     while(tHead->num != end){  // Fino a che il tHead è diverso dal nodo finale continua
         maxDist = bstNode->distance + bstNode->cars->maxAutonomy;  // Massima distanza che l'auto può raggiungere dalla stazione attuale
         bstNode = bstSuccessor(bstNode);  // Successore del nodo attuale
-        while(maxDist >= bstNode->distance){  // Fino a che la massima distanza dell'auto copre le stazioni, aggiungile alla lista
+        while(bstNode!=NULL && maxDist >= bstNode->distance){  // Fino a che la massima distanza dell'auto copre le stazioni, aggiungile alla lista
             if(tSeek->next == NULL){
                 newNode = (List*)malloc(sizeof (List));
                 newNode->num = bstNode->distance;
@@ -400,24 +395,22 @@ void planRoute(NodeBst *root, int start, int end){
             tSeek = tSeek->next;
             if(tSeek->d > tHead->d + 1){  // Relaxing
                 tSeek->d = tHead->d + 1;
-                if(tPi->num < tHead->num){  // Salva un nuovo nodo se quello attuale salvato è minore.
-                    tPi->next = (List*)malloc(sizeof (List));
-                    tPi = tPi->next;
-                    tPi->num = tHead->num;
-                }
+                tSeek->pi = tHead;
             }
 
             bstNode = bstSuccessor(bstNode);
         }
         tHead = tHead->next;
         tSeek = tHead;
+        if(tHead->num == end)
+            break;
         bstNode = bstSearch(root, tHead->num);
     }
-
-    while(headPi != NULL){
-        printf("%d ", headPi->num);
-        headPi = headPi->next;
+    while(tHead != NULL){
+        printf("%d ", tHead->num);
+        tHead = tHead->pi;
     }
+
 }
 
 // ---------------------------------------------------------------
