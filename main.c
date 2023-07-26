@@ -369,11 +369,11 @@ bool removeCar(NodeBst *station, int autonomy){
 }
 
 void planRoute(NodeBst *root, int start, int end){
-    int maxDist = 0;
-    List *headSortedNodes = NULL;
-    List *tHead = NULL;
-    List *tSeek = NULL;
-    NodeBst *bstNode = bstSearch(root, start);
+    int maxDist = 0;  // Max distance reachable from station x.
+    List *headSortedNodes = NULL;  // HEAD of sorted nodes.
+    List *tHead = NULL;  // Actual station to compare to the others.
+    List *tSeek = NULL;  // Last station added. Used to move between nodes.
+    NodeBst *bstNode = bstSearch(root, start);  // Actual node to compare.
 
     List *newNode = (List*)malloc(sizeof (List));
     newNode->num = bstNode->distance;
@@ -386,7 +386,7 @@ void planRoute(NodeBst *root, int start, int end){
         maxDist = bstNode->distance + bstNode->cars->maxAutonomy;  // Massima distanza che l'auto può raggiungere dalla stazione attuale
         bstNode = bstSuccessor(bstNode);  // Successore del nodo attuale
         while(bstNode!=NULL && maxDist >= bstNode->distance){  // Fino a che la massima distanza dell'auto copre le stazioni, aggiungile alla lista
-            if(tSeek->next == NULL){
+            if(tSeek->next == NULL){  // Controllo se dopo ho un puntatore a NULL, aggiungo la stazione.
                 newNode = (List*)malloc(sizeof (List));
                 newNode->num = bstNode->distance;
                 newNode->d = INF;
@@ -395,22 +395,25 @@ void planRoute(NodeBst *root, int start, int end){
             tSeek = tSeek->next;
             if(tSeek->d > tHead->d + 1){  // Relaxing
                 tSeek->d = tHead->d + 1;
-                tSeek->pi = tHead;
+                tSeek->pi = tHead;  // Segna il numero in tHead come precedente.
             }
 
             bstNode = bstSuccessor(bstNode);
         }
         tHead = tHead->next;
         tSeek = tHead;
-        if(tHead->num == end)
+        if(tHead == NULL) {  // Vuol dire che non esiste un successore
+            printf("nessun percorso\n");
+            return;
+        }
+        if(tHead->num == end)  // Sono arrivato al nodo di end.
             break;
         bstNode = bstSearch(root, tHead->num);
     }
-    while(tHead != NULL){
+    while(tHead != NULL){  // Stampa al contrario per ora. DA SISTEMARE
         printf("%d ", tHead->num);
         tHead = tHead->pi;
     }
-
 }
 
 // ---------------------------------------------------------------
@@ -496,13 +499,13 @@ int main() {
                 if(newStation == NULL){  // If null is already in the tree. Do nothing.
                     while((*in < 97 || *in > 122) && *in != -1)  // Forward the input until next command. (97=a, 122=z)
                         *in = getc_unlocked(stdin);
-                    printf("non aggiunta %d\n", distance);
+                    printf("non aggiunta\n");// %d\n", distance);
                     break;
                 }
                 for(int i=1; i<=carNumber; i++){
                     addCar(newStation, stringToInt(in));
                 }
-                printf("aggiunta %d\n", distance);
+                printf("aggiunta\n");// %d\n", distance);
                 break;
             }
 
@@ -552,6 +555,7 @@ int main() {
                 int distanceEnd = stringToInt(in);
 
                 planRoute(rootStations, distanceStart, distanceEnd);
+                break;
             }
 
             default:
@@ -559,6 +563,6 @@ int main() {
         }
     }
 
-    bstInorderWalk(rootStations);
+    //bstInorderWalk(rootStations);
     return 0;
 }
