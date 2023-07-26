@@ -30,27 +30,34 @@ typedef struct Cars{
     int maxAutonomy;  // Maximum autonomy in the list of cars.
 }Cars;
 
-typedef struct Edge{
-    struct NodeGraph *node;
-    struct Edge *next;
-}Edge;
-
-typedef struct NodeGraph{
+typedef struct List{
     int num;
     int d;
-    struct Edge *edges;
-    struct NodeGraph *next;
-}NodeGraph;
-
-typedef struct List{
-    int data;
+    struct List *pi;
     struct List *next;
 }List;
 
-typedef struct Graph{
-    struct List *pi;
-    struct NodeGraph *nodes;
-}Graph;
+//typedef struct Edge{
+//    struct NodeGraph *node;
+//    struct Edge *next;
+//}Edge;
+//
+//typedef struct NodeGraph{
+//    int num;
+//    int d;
+//    struct Edge *edges;
+//    struct NodeGraph *next;
+//}NodeGraph;
+//
+//typedef struct List{
+//    int data;
+//    struct List *next;
+//}List;
+//
+//typedef struct Graph{
+//    struct List *pi;
+//    struct NodeGraph *nodes;
+//}Graph;
 
 void printCars(NodeBst *station){
     for(int i=0; i<station->cars->size; i++){
@@ -362,26 +369,54 @@ bool removeCar(NodeBst *station, int autonomy){
 }
 
 void planRoute(NodeBst *root, int start, int end){
-    int distanceRef, maxAutonomy;
-    Graph *g = (Graph*)malloc(sizeof(Graph));
+    int maxDist = 0;
+    List *headPi = NULL;
+    List *tPi = NULL;
+    List *headSortedNodes = NULL;
+    List *tHead = NULL;
+    List *tSeek = NULL;
+    NodeBst *bstNode = bstSearch(root, start);
 
-    NodeBst *bstActualNode = bstSearch(root, start);  // Esiste sicuramente.
-    distanceRef = bstActualNode->distance;
-    maxAutonomy = bstActualNode->cars->maxAutonomy;
-    NodeGraph *newNode = (NodeGraph*)malloc(sizeof(NodeGraph));
-    newNode->num = bstActualNode->distance;
-    newNode->d = 0;  // Metto a 0 perchè è il source
-    g->nodes = newNode;  // Aggiungo al grafo il primo nodo HEAD.
+    List *newNode = (List*)malloc(sizeof (List));
+    newNode->num = bstNode->distance;
+    newNode->d = 0;
+    headSortedNodes = newNode;
+    tHead = headSortedNodes;
+    tSeek = tHead;
+    headPi = (List*)malloc(sizeof (List));
+    headPi->num = bstNode->distance;
+    tPi = headPi;
 
-    NodeGraph *nodeSeek = g->nodes;
-    Edge *
-    NodeBst *bstSucc = bstSuccessor(bstActualNode);
-    while(distanceRef+maxAutonomy >= bstSucc->distance){
-        newNode = (NodeGraph*)malloc(sizeof(NodeGraph));
-        newNode->num = bstSucc->distance;
-        newNode->d = INF;
+    while(tHead->num != end){  // Fino a che il tHead è diverso dal nodo finale continua
+        maxDist = bstNode->distance + bstNode->cars->maxAutonomy;  // Massima distanza che l'auto può raggiungere dalla stazione attuale
+        bstNode = bstSuccessor(bstNode);  // Successore del nodo attuale
+        while(maxDist >= bstNode->distance){  // Fino a che la massima distanza dell'auto copre le stazioni, aggiungile alla lista
+            if(tSeek->next == NULL){
+                newNode = (List*)malloc(sizeof (List));
+                newNode->num = bstNode->distance;
+                newNode->d = INF;
+                tSeek->next = newNode;
+            }
+            tSeek = tSeek->next;
+            if(tSeek->d > tHead->d + 1){  // Relaxing
+                tSeek->d = tHead->d + 1;
+                if(tPi->num < tHead->num){  // Salva un nuovo nodo se quello attuale salvato è minore.
+                    tPi->next = (List*)malloc(sizeof (List));
+                    tPi = tPi->next;
+                    tPi->num = tHead->num;
+                }
+            }
 
-        bstSucc = bstSuccessor(bstSucc);
+            bstNode = bstSuccessor(bstNode);
+        }
+        tHead = tHead->next;
+        tSeek = tHead;
+        bstNode = bstSearch(root, tHead->num);
+    }
+
+    while(headPi != NULL){
+        printf("%d ", headPi->num);
+        headPi = headPi->next;
     }
 }
 
