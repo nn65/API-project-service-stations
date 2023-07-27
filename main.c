@@ -497,10 +497,11 @@ void planRouteSimpleForward(NodeBst *root, int start, int end){
         printf("%d ", tHead->num);
         tHead = tHead->next;
     }
+    printf("\n");
 }
 
 void planRouteSimpleBackward(NodeBst *root, int start, int end){
-    printf("SCIAO BELO");
+    printf("SCIAO BELO\n");
 }
 
 // ---------------------------------------------------------------
