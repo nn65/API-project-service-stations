@@ -189,13 +189,24 @@ NodeBst *bstSuccessor(NodeBst *x){
     return y;
 }
 
+/*
+ * Binary search tree node predecessor.
+ */
+NodeBst *bstPredecessor(NodeBst *x){
+    NodeBst *y;
+    if(x->l != NULL)
+        return bstMax(x->l);
+    y = x->p;
+    while(y!=NULL && x==y->l){
+        x = y;
+        y=y->p;
+    }
+    return y;
+}
+
 // ---------------------------------------------------------------
 // Graph.
 // ---------------------------------------------------------------
-
-void graphAddNode(){
-
-}
 
 ///*
 // * Heap max heapify function.
@@ -368,7 +379,7 @@ bool removeCar(NodeBst *station, int autonomy){
         return false;
 }
 
-void planRoute(NodeBst *root, int start, int end){
+void planRouteForward(NodeBst *root, int start, int end){
     int maxDist = 0;  // Max distance reachable from station x.
     List *headSortedNodes = NULL;  // HEAD of sorted nodes.
     List *tHead = NULL;  // Actual station to compare to the others.
@@ -410,10 +421,33 @@ void planRoute(NodeBst *root, int start, int end){
             break;
         bstNode = bstSearch(root, tHead->num);
     }
-    while(tHead != NULL){  // Stampa al contrario per ora. DA SISTEMARE
+    while(tHead != NULL){
         printf("%d ", tHead->num);
         tHead = tHead->pi;
     }
+}
+
+void planRouteSimpleForward(NodeBst *root, int start, int end){
+    NodeBst *ref = bstSearch(root, start);
+    NodeBst *seek = NULL;
+
+    int maxDist = ref->distance + ref->cars->maxAutonomy;
+    seek = bstSuccessor(ref);
+    while(1){
+        while(maxDist >= seek->distance){
+            if(seek->distance + seek->cars->maxAutonomy > maxDist){
+                ref = seek;
+            }
+            seek = bstSuccessor(seek);
+        }
+        maxDist = ref->distance + ref->cars->maxAutonomy;
+        seek = bstSuccessor(ref);
+    }
+
+}
+
+void planRouteSimpleBackward(NodeBst *root, int start, int end){
+
 }
 
 // ---------------------------------------------------------------
@@ -554,7 +588,10 @@ int main() {
                 int distanceStart = stringToInt(in);  // The stations are certainly in the tree (da specifica).
                 int distanceEnd = stringToInt(in);
 
-                planRoute(rootStations, distanceStart, distanceEnd);
+                if(distanceStart < distanceEnd)
+                    planRouteForward(rootStations, distanceStart, distanceEnd);
+                else
+                    planRouteBackward(rootStations, distanceStart, distanceEnd);
                 break;
             }
 
