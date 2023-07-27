@@ -37,6 +37,14 @@ typedef struct List{
     struct List *next;
 }List;
 
+typedef struct ListSimply{
+    int num;
+    int maxAut;
+    bool visited;
+    struct ListSimply *pi;
+    struct ListSimply *next;
+}ListSimply;
+
 //typedef struct Edge{
 //    struct NodeGraph *node;
 //    struct Edge *next;
@@ -428,26 +436,71 @@ void planRouteForward(NodeBst *root, int start, int end){
 }
 
 void planRouteSimpleForward(NodeBst *root, int start, int end){
-    NodeBst *ref = bstSearch(root, start);
-    NodeBst *seek = NULL;
+    int maxDist = 0;  // Max distance reachable from station x.
+    ListSimply *headSortedNodes = NULL;  // HEAD of sorted nodes.
+    ListSimply *tHead = NULL;  // Actual station to compare to the others.
+    ListSimply *tSeek = NULL;  // Last station added. Used to move between nodes.
+    NodeBst *bstNode = bstSearch(root, start);  // Actual node to compare.
 
-    int maxDist = ref->distance + ref->cars->maxAutonomy;
-    seek = bstSuccessor(ref);
-    while(1){
-        while(maxDist >= seek->distance){
-            if(seek->distance + seek->cars->maxAutonomy > maxDist){
-                ref = seek;
-            }
-            seek = bstSuccessor(seek);
-        }
-        maxDist = ref->distance + ref->cars->maxAutonomy;
-        seek = bstSuccessor(ref);
+    // Primo nodo
+    ListSimply *newNode = (ListSimply*)malloc(sizeof (ListSimply));
+    newNode->num = bstNode->distance;
+    newNode->maxAut = bstNode->cars->maxAutonomy;
+    newNode->visited = false;
+    newNode->pi = NULL;
+    headSortedNodes = newNode;
+    tHead = headSortedNodes;
+
+    // Lista di tutti i nodi possibili da start a end.
+    bstNode = bstSuccessor(bstNode);
+    while(bstNode!=NULL && bstNode->distance <= end){
+        newNode = (ListSimply*)malloc(sizeof (ListSimply));
+        newNode->num = bstNode->distance;
+        newNode->maxAut = bstNode->cars->maxAutonomy;
+        newNode->visited = false;
+        tHead->next = newNode;
+        tHead = tHead->next;
+        bstNode = bstSuccessor(bstNode);
     }
+    tHead->next = NULL;  //Chiudo la lista
+    tHead = headSortedNodes;
+    tSeek = tHead;
 
+    while(tHead->num != end){  // Fino a che il tHead è diverso dal nodo finale continua
+        maxDist = tHead->num + tHead->maxAut;  // Massima distanza che l'auto può raggiungere dalla stazione attuale
+        tSeek = tHead->next;  // Successore del nodo attuale
+        while(tSeek!=NULL && maxDist >= tSeek->num){  // Fino a che la massima distanza dell'auto copre le stazioni
+            if(tSeek->visited == false){
+                tSeek->visited = true;
+                tSeek->pi = tHead;
+            }
+            tSeek = tSeek->next;
+        }
+        tHead = tHead->next;
+
+        if(tHead->visited == false){  // Se sono in un nodo che non è mai stato visitato, vuol dire che non ha archi entranti. Di conseguenza vuol dure che non è raggiungibile
+            printf("nessun percorso\n");
+            return;
+        }
+        if(tHead->num == end)  // Sono arrivato al nodo di end.
+            break;
+    }
+    ListSimply *next = NULL;
+    while(1){
+        next = tHead;
+        if(tHead->pi == NULL)
+            break;
+        tHead = tHead->pi;
+        tHead->next = next;
+    }
+    while(tHead != NULL){
+        printf("%d ", tHead->num);
+        tHead = tHead->next;
+    }
 }
 
 void planRouteSimpleBackward(NodeBst *root, int start, int end){
-
+    printf("SCIAO BELO");
 }
 
 // ---------------------------------------------------------------
@@ -589,9 +642,9 @@ int main() {
                 int distanceEnd = stringToInt(in);
 
                 if(distanceStart < distanceEnd)
-                    planRouteForward(rootStations, distanceStart, distanceEnd);
+                    planRouteSimpleForward(rootStations, distanceStart, distanceEnd);
                 else
-                    planRouteBackward(rootStations, distanceStart, distanceEnd);
+                    planRouteSimpleBackward(rootStations, distanceStart, distanceEnd);
                 break;
             }
 
