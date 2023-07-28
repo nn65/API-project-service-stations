@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#define CARS_CAPACITY 50  // Default array maximum capacity to allocate.
+#define CARS_CAPACITY 128  // Default array maximum capacity to allocate.
 #define ADD_STATION 1
 #define REMOVE_STATION 2
 #define ADD_CAR 3
@@ -149,9 +149,9 @@ NodeBst *bstMax(NodeBst *x){
 /*
  * Binary search tree utility function to delete a node
  */
-void bstTransplant(NodeBst *root, NodeBst *u, NodeBst *v){
+void bstTransplant(NodeBst **root, NodeBst *u, NodeBst *v){
     if(u->p==NULL)
-        root = v;
+        (*root) = v;
     else if(u==u->p->l)
         u->p->l = v;
     else
@@ -163,7 +163,7 @@ void bstTransplant(NodeBst *root, NodeBst *u, NodeBst *v){
 /*
  * Binary search tree node deletion.
  */
-void bstDelete(NodeBst *root, NodeBst *z){
+void bstDelete(NodeBst **root, NodeBst *z){
     NodeBst *y;
     if(z->l==NULL)
         bstTransplant(root, z, z->r);
@@ -305,6 +305,9 @@ NodeBst *addStation(NodeBst **root, int distance){
     newStation->cars->size = 0;
     newStation->cars->maxAutonomy = 0;
     newStation->cars->maxCapacity = CARS_CAPACITY;
+    newStation->l = NULL;
+    newStation->r = NULL;
+    newStation->p = NULL;
     bstInsert(root, newStation);
     return newStation;
 }
@@ -313,8 +316,8 @@ NodeBst *addStation(NodeBst **root, int distance){
  * Remove the selected station.
  * Return false if the station doesn't exist.
  */
-bool removeStation(NodeBst *root, int distance){
-    NodeBst *nodeToDelete = bstSearch(root, distance);
+bool removeStation(NodeBst **root, int distance){
+    NodeBst *nodeToDelete = bstSearch(*root, distance);
     // If the station is not in the tree, do nothing.
     if(nodeToDelete == NULL)
         return false;
@@ -612,7 +615,7 @@ int main() {
 
             case REMOVE_STATION:{
                 int distance = stringToInt(in);
-                bool removed = removeStation(rootStations, distance);
+                bool removed = removeStation(&rootStations, distance);
                 if(removed)
                     printf("demolita\n");
                 else
