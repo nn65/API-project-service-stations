@@ -329,7 +329,7 @@ bool removeStation(NodeBst **root, int distance){
 
 /*
  * Add a car in the service station.
- * HP: the station exists in the tree and the autonomy is not 0.
+ * HP: the station exists in the tree.
  */
 void addCar(NodeBst *station, int autonomy){
     Cars *cars = station->cars;
@@ -355,10 +355,15 @@ void addCar(NodeBst *station, int autonomy){
  * Return false if the car doesn't exist in the station.
  */
 bool removeCar(NodeBst *station, int autonomy){
+//    if(station->distance == 11486)
+//        printf("ECCOTI PORCODDIO");
     Cars *cars = station->cars;
     bool found = false;
     bool replaceMax = (autonomy == cars->maxAutonomy);
     int next = 0;
+
+    if(replaceMax)
+        cars->maxAutonomy = 0;
 
     for(int i=0; i<cars->size; i++){
         // Remove the selected car if not already found
@@ -389,6 +394,19 @@ bool removeCar(NodeBst *station, int autonomy){
         return true;
     else
         return false;
+}
+
+void printAlg(List *r){
+    List *t = r;
+    while(t != NULL){
+        printf("%d | %d ", t->num, t->d);
+        if(t->pi != NULL)
+            printf("| %d\n", t->pi->num);
+        else
+            printf("| NULL\n");
+        t=t->next;
+    }
+    printf("\n");
 }
 
 void planRouteForward(NodeBst *root, int start, int end){
@@ -465,6 +483,7 @@ void planRouteForward(NodeBst *root, int start, int end){
 }
 
 void planRouteBackward(NodeBst *root, int start, int end){
+//    bool printPath = (start == 15837 && end == 415);  // TODO eliminare
     int maxDist = 0;  // Max distance reachable from station x.
     List *headSortedNodes = NULL;  // HEAD of sorted nodes.
     List *tHead = NULL;  // Actual station to compare to the others.
@@ -521,6 +540,9 @@ void planRouteBackward(NodeBst *root, int start, int end){
         if(tHead->num == end)  // Sono arrivato al nodo di end.
             break;
     }
+    // TODO eliminare
+//    if(printPath)
+//        printAlg(headSortedNodes);
     // Save all the values from the end to the start.
     int len = tHead->d + 1;
     int finalSequence[len];
@@ -699,7 +721,7 @@ int main() {
                 int distance = stringToInt(in);
                 int autonomy = stringToInt(in);
                 NodeBst *station = bstSearch(rootStations, distance);
-                if(station == NULL || autonomy <= 0){  // If null it doesn't exist in the tree.
+                if(station == NULL || autonomy < 0){  // If null it doesn't exist in the tree.
                     printf("non aggiunta\n");
                     break;
                 }
