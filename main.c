@@ -7,7 +7,7 @@
 #define ADD_CAR 3
 #define REMOVE_CAR 4
 #define PLAN_ROUTE 5
-#define INF 64000;
+#define INF 2147483647
 
 /*
  * Node of the binary search tree.
@@ -33,6 +33,7 @@ typedef struct Cars{
 typedef struct List{
     int num;
     int d;
+    int maxAut;
     struct List *pi;
     struct List *next;
 }List;
@@ -397,45 +398,67 @@ void planRouteForward(NodeBst *root, int start, int end){
     List *tSeek = NULL;  // Last station added. Used to move between nodes.
     NodeBst *bstNode = bstSearch(root, start);  // Actual node to compare.
 
+    // First node.
     List *newNode = (List*)malloc(sizeof (List));
     newNode->num = bstNode->distance;
     newNode->d = 0;
+    newNode->maxAut = bstNode->cars->maxAutonomy;
+    newNode->pi = NULL;
     headSortedNodes = newNode;
     tHead = headSortedNodes;
     tSeek = tHead;
 
+    // List of all nodes from start to end.
+    bstNode = bstSuccessor(bstNode);
+    while(bstNode!=NULL && bstNode->distance <= end){
+        newNode = (List*)malloc(sizeof (List));
+        newNode->num = bstNode->distance;
+        newNode->d = INF;
+        newNode->maxAut = bstNode->cars->maxAutonomy;
+        tHead->next = newNode;
+        tHead = tHead->next;
+        bstNode = bstSuccessor(bstNode);
+    }
+    // Close the list. Bring tHead to the starting point.
+    tHead->next = NULL;
+    tHead = headSortedNodes;
+    tSeek = tHead;
+
     while(tHead->num != end){  // Fino a che il tHead è diverso dal nodo finale continua
-        maxDist = bstNode->distance + bstNode->cars->maxAutonomy;  // Massima distanza che l'auto può raggiungere dalla stazione attuale
-        bstNode = bstSuccessor(bstNode);  // Successore del nodo attuale
-        while(bstNode!=NULL && maxDist >= bstNode->distance){  // Fino a che la massima distanza dell'auto copre le stazioni, aggiungile alla lista
-            if(tSeek->next == NULL){  // Controllo se dopo ho un puntatore a NULL, aggiungo la stazione.
-                newNode = (List*)malloc(sizeof (List));
-                newNode->num = bstNode->distance;
-                newNode->d = INF;
-                tSeek->next = newNode;
-            }
-            tSeek = tSeek->next;
-            if(tSeek->d > tHead->d + 1){  // Relaxing
+        maxDist = tHead->num + tHead->maxAut;  // Massima distanza che l'auto può raggiungere dalla stazione attuale
+        tSeek = tHead->next;  // Successore del nodo attuale
+        while(tSeek!=NULL && maxDist >= tSeek->num){  // Fino a che la massima distanza dell'auto copre le stazioni, aggiungile alla lista
+            if(tSeek->d > tHead->d + 1){  // Relaxing se esiste una path con meno nodi
                 tSeek->d = tHead->d + 1;
                 tSeek->pi = tHead;  // Segna il numero in tHead come precedente.
+            } else if(tSeek->d == tHead->d + 1){  // Se esiste una path con stessi nodi, valuto il minore e salvo quello come precedente
+                if(tSeek->pi->d > tHead->d){  // Se il pi è maggiore di questo, sceglo quello con numero piu basso
+                    tSeek->pi = tHead;
+                }
             }
-
-            bstNode = bstSuccessor(bstNode);
+            tSeek = tSeek->next;
         }
         tHead = tHead->next;
-        tSeek = tHead;
-        if(tHead == NULL) {  // Vuol dire che non esiste un successore
+
+        if(tHead->d == INF){  // Se sono in un nodo che non è mai stato visitato, vuol dire che non ha archi entranti. Di conseguenza vuol dire che non è raggiungibile
             printf("nessun percorso\n");
             return;
         }
         if(tHead->num == end)  // Sono arrivato al nodo di end.
             break;
-        bstNode = bstSearch(root, tHead->num);
     }
+    // Save all the values from the end to the start.
+    int finalSequence[tHead->d + 1];
+    int i = tHead->d+1-1;
+    // Ripercorro tutti i percorsi dalla fine all'inizio e li salvo in un array, dalla fine all'inizio.
     while(tHead != NULL){
-        printf("%d ", tHead->num);
+        finalSequence[i] = tHead->num;
+        i--;
         tHead = tHead->pi;
     }
+    // Stampo i valori dall'inizio dell'array, ovvero nel verso giusto.
+    for(i=0; i<tHead->d+1-1; i++)
+        printf("%d ", tHead->num);
 }
 
 void planRouteSimpleForward(NodeBst *root, int start, int end){
@@ -646,7 +669,7 @@ int main() {
                 int distanceEnd = stringToInt(in);
 
                 if(distanceStart < distanceEnd)
-                    planRouteSimpleForward(rootStations, distanceStart, distanceEnd);
+                    planRouteForward(rootStations, distanceStart, distanceEnd);
                 else
                     planRouteSimpleBackward(rootStations, distanceStart, distanceEnd);
                 break;
