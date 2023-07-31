@@ -410,8 +410,8 @@ void planRouteForward(NodeBst *root, int start, int end){
 
     // List of all nodes from start to end.
     bstNode = bstSuccessor(bstNode);
-    while(bstNode!=NULL && bstNode->distance <= end){
-        newNode = (List*)malloc(sizeof (List));
+    while(bstNode!=NULL && bstNode->distance <= end) {
+        newNode = (List *) malloc(sizeof(List));
         newNode->num = bstNode->distance;
         newNode->d = INF;
         newNode->maxAut = bstNode->cars->maxAutonomy;
@@ -419,6 +419,7 @@ void planRouteForward(NodeBst *root, int start, int end){
         tHead = tHead->next;
         bstNode = bstSuccessor(bstNode);
     }
+
     // Close the list. Bring tHead to the starting point.
     tHead->next = NULL;
     tHead = headSortedNodes;
@@ -448,8 +449,9 @@ void planRouteForward(NodeBst *root, int start, int end){
             break;
     }
     // Save all the values from the end to the start.
-    int finalSequence[tHead->d + 1];
-    int i = tHead->d+1-1;
+    int len = tHead->d + 1;
+    int finalSequence[len];
+    int i = len-1;
     // Ripercorro tutti i percorsi dalla fine all'inizio e li salvo in un array, dalla fine all'inizio.
     while(tHead != NULL){
         finalSequence[i] = tHead->num;
@@ -457,8 +459,9 @@ void planRouteForward(NodeBst *root, int start, int end){
         tHead = tHead->pi;
     }
     // Stampo i valori dall'inizio dell'array, ovvero nel verso giusto.
-    for(i=0; i<tHead->d+1-1; i++)
-        printf("%d ", tHead->num);
+    for(i=0; i<len; i++)
+        printf("%d ", finalSequence[i]);
+    printf("\n");
 }
 
 void planRouteSimpleForward(NodeBst *root, int start, int end){
@@ -526,8 +529,77 @@ void planRouteSimpleForward(NodeBst *root, int start, int end){
     printf("\n");
 }
 
-void planRouteSimpleBackward(NodeBst *root, int start, int end){
-    printf("SCIAO BELO\n");
+void planRouteBackward(NodeBst *root, int start, int end){
+    int maxDist = 0;  // Max distance reachable from station x.
+    List *headSortedNodes = NULL;  // HEAD of sorted nodes.
+    List *tHead = NULL;  // Actual station to compare to the others.
+    List *tSeek = NULL;  // Last station added. Used to move between nodes.
+    NodeBst *bstNode = bstSearch(root, start);  // Actual node to compare.
+
+    // First node.
+    List *newNode = (List*)malloc(sizeof (List));
+    newNode->num = bstNode->distance;
+    newNode->d = 0;
+    newNode->maxAut = bstNode->cars->maxAutonomy;
+    newNode->pi = NULL;
+    headSortedNodes = newNode;
+    tHead = headSortedNodes;
+    tSeek = tHead;
+
+    // List of all nodes from start to end.
+    bstNode = bstPredecessor(bstNode);
+    while(bstNode!=NULL && bstNode->distance >= end){
+        newNode = (List*)malloc(sizeof (List));
+        newNode->num = bstNode->distance;
+        newNode->d = INF;
+        newNode->maxAut = bstNode->cars->maxAutonomy;
+        tHead->next = newNode;
+        tHead = tHead->next;
+        bstNode = bstPredecessor(bstNode);
+    }
+
+    // Close the list. Bring tHead to the starting point.
+    tHead->next = NULL;
+    tHead = headSortedNodes;
+    tSeek = tHead;
+
+    while(tHead->num != end){  // Fino a che il tHead è diverso dal nodo finale continua
+        maxDist = tHead->num - tHead->maxAut;  // Massima distanza che l'auto può raggiungere dalla stazione attuale
+        tSeek = tHead->next;  // Successore del nodo attuale
+        while(tSeek!=NULL && maxDist <= tSeek->num){  // Fino a che la massima distanza dell'auto copre le stazioni, aggiungile alla lista
+            if(tSeek->d > tHead->d + 1){  // Relaxing se esiste una path con meno nodi
+                tSeek->d = tHead->d + 1;
+                tSeek->pi = tHead;  // Segna il numero in tHead come precedente.
+            } else if(tSeek->d == tHead->d + 1){  // Se esiste una path con stessi nodi, valuto il minore e salvo quello come precedente
+                if(tSeek->pi->d > tHead->d){  // Se il pi è maggiore di questo, sceglo quello con numero piu basso
+                    tSeek->pi = tHead;
+                }
+            }
+            tSeek = tSeek->next;
+        }
+        tHead = tHead->next;
+
+        if(tHead->d == INF){  // Se sono in un nodo che non è mai stato visitato, vuol dire che non ha archi entranti. Di conseguenza vuol dire che non è raggiungibile
+            printf("nessun percorso\n");
+            return;
+        }
+        if(tHead->num == end)  // Sono arrivato al nodo di end.
+            break;
+    }
+    // Save all the values from the end to the start.
+    int len = tHead->d + 1;
+    int finalSequence[len];
+    int i = len-1;
+    // Ripercorro tutti i percorsi dalla fine all'inizio e li salvo in un array, dalla fine all'inizio.
+    while(tHead != NULL){
+        finalSequence[i] = tHead->num;
+        i--;
+        tHead = tHead->pi;
+    }
+    // Stampo i valori dall'inizio dell'array, ovvero nel verso giusto.
+    for(i=0; i<len; i++)
+        printf("%d ", finalSequence[i]);
+    printf("\n");
 }
 
 // ---------------------------------------------------------------
@@ -667,11 +739,10 @@ int main() {
             case PLAN_ROUTE:{
                 int distanceStart = stringToInt(in);  // The stations are certainly in the tree (da specifica).
                 int distanceEnd = stringToInt(in);
-
                 if(distanceStart < distanceEnd)
                     planRouteForward(rootStations, distanceStart, distanceEnd);
                 else
-                    planRouteSimpleBackward(rootStations, distanceStart, distanceEnd);
+                    planRouteBackward(rootStations, distanceStart, distanceEnd);
                 break;
             }
 
