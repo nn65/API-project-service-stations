@@ -1,6 +1,6 @@
 # Algorithm and data structures project 2022/2023
 ## Introduction
-[Here](https://github.com/nn65/API-project-service-stations/Utils/specs.pdf) you can find all the specifications about the project.
+[Here](https://github.com/nn65/API-project-service-stations/blob/main/Utils/specs.pdf) you can find all the specifications about the project.
 
 Final Score: 30/30 cum laude.
 ## Requirements
